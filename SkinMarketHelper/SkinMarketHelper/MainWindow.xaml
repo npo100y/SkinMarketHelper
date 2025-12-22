@@ -1,0 +1,214 @@
+﻿<Window x:Class="SkinMarketHelper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SkinMarketHelper.ViewModels"
+        xmlns:views="clr-namespace:SkinMarketHelper.Views"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Height="600" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="#FF202020">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <!-- Стили кнопок верхнего меню -->
+        <Style x:Key="TopNavButtonStyle" TargetType="Button">
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Background" Value="#FF404040"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FF606060"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style x:Key="UserInfoButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4,0"/>
+        </Style>
+
+        <DataTemplate DataType="{x:Type vm:CatalogViewModel}">
+            <views:CatalogView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:InventoryViewModel}">
+            <views:InventoryView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:CartViewModel}">
+            <views:CartView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
+            <views:ProfileView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:AdminPanelViewModel}">
+            <views:AdminPanelView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:PriceComparisonViewModel}">
+            <views:PriceComparisonView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <!-- ЭКРАН ВХОДА -->
+        <Grid>
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsAuthenticated}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="1"
+                    Background="#FF2B2B2B"
+                    CornerRadius="8"
+                    Padding="24"
+                    Margin="300,0"
+                    HorizontalAlignment="Stretch">
+
+                <StackPanel>
+                    <TextBlock Text="Вход в SkinMarketHelper"
+                               FontSize="20"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,16"/>
+
+                    <TextBlock Text="Введите SteamID64 или имя пользователя:"
+                               Foreground="White"
+                               Margin="0,0,0,8"/>
+
+                    <TextBox Text="{Binding LoginIdentifier, UpdateSourceTrigger=PropertyChanged}"
+                             Height="28"
+                             Margin="0,0,0,8"/>
+
+                    <TextBlock Text="{Binding LoginError}"
+                               Foreground="OrangeRed"
+                               Margin="0,0,0,8"/>
+
+                    <Button Content="Войти"
+                            Command="{Binding LoginCommand}"
+                            Height="32"
+                            Width="120"
+                            HorizontalAlignment="Right"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
+        <Grid>
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsAuthenticated}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48"/>
+                <!-- верхняя панель -->
+                <RowDefinition Height="*"/>
+                <!-- содержимое -->
+            </Grid.RowDefinitions>
+
+            <!-- Верхняя панель: навигация и пользователь -->
+            <DockPanel Grid.Row="0" Background="#FF303030" LastChildFill="True">
+                <!-- Левая часть: название и вкладки -->
+                <StackPanel Orientation="Horizontal"
+                    DockPanel.Dock="Left"
+                    VerticalAlignment="Center"
+                    Margin="10,0,0,0">
+                    <TextBlock Text="SkinMarketHelper"
+                       Foreground="White"
+                       FontSize="16"
+                       FontWeight="Bold"
+                       Margin="0,0,20,0"/>
+
+                    <Button Content="Каталог"
+                    Style="{StaticResource TopNavButtonStyle}"
+                    Command="{Binding ShowCatalogCommand}"/>
+
+                    <Button Content="Внешние цены"
+                    Style="{StaticResource TopNavButtonStyle}"
+                    Command="{Binding ShowPriceComparisonCommand}"/>
+
+                    <Button Content="Инвентарь"
+                    Style="{StaticResource TopNavButtonStyle}"
+                    Command="{Binding ShowInventoryCommand}"/>
+
+                    <Button Content="Корзина"
+                    Style="{StaticResource TopNavButtonStyle}"
+                    Command="{Binding ShowCartCommand}"/>
+
+                    <Button Content="Админ"
+        Command="{Binding ShowAdminCommand}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource TopNavButtonStyle}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAdmin}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+
+                <!-- Правая часть: пользователь и баланс -->
+                <StackPanel Orientation="Horizontal"
+                    DockPanel.Dock="Right"
+                    VerticalAlignment="Center"
+                    Margin="0,0,10,0">
+                    <!-- Кнопка профиля по клику на имя -->
+                    <Button Command="{Binding ShowProfileCommand}"
+                    Style="{StaticResource UserInfoButtonStyle}">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="{Binding CurrentUser.Username}"
+                               Foreground="White"
+                               FontWeight="Bold"/>
+                            <TextBlock Text="{Binding CurrentUser.Balance, StringFormat='Баланс: {0:F2} ₽'}"
+                               Foreground="LightGreen"
+                               FontSize="12"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Content="Выход"
+                    Style="{StaticResource TopNavButtonStyle}"
+                    Command="{Binding LogoutCommand}"
+                    Margin="10,0,0,0"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- Область содержимого -->
+            <Border Grid.Row="1"
+            Background="#FF202020"
+            Padding="5">
+                <ContentControl Content="{Binding CurrentViewModel}"/>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

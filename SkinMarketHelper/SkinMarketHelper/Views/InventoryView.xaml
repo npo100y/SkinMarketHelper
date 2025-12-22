@@ -1,0 +1,196 @@
+﻿<UserControl x:Class="SkinMarketHelper.Views.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="800">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Фильтры и кнопки -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Фильтр по игре -->
+            <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,10,0">
+                <TextBlock Text="Игра:" Foreground="White" Margin="0,0,0,3"/>
+                <ComboBox ItemsSource="{Binding Games}"
+                          SelectedItem="{Binding SelectedGame}"
+                          DisplayMemberPath="Name"
+                          Height="26"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1"/>
+
+            <StackPanel Grid.Column="2" Orientation="Vertical">
+                <TextBlock Text=" " />
+                <Button Content="Обновить"
+                        Command="{Binding RefreshCommand}"
+                        Width="90"
+                        Height="26"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Основная область: список предметов и правая панель продажи -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="1.5*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Список предметов инвентаря -->
+            <ListBox Grid.Column="0"
+                 ItemsSource="{Binding InventoryItems}"
+                 SelectedItem="{Binding SelectedInventoryItem}"
+                 BorderThickness="0"
+                 Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,8,8"
+                            Padding="8"
+                            Background="#FF2D2D2D"
+                            CornerRadius="5"
+                            Width="260">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Item.Name}"
+                                       FontSize="14"
+                                       FontWeight="Bold"
+                                       Foreground="White"/>
+                                        <TextBlock Text="  [В продаже]"
+                                       Foreground="LightGreen"
+                                       Margin="5,0,0,0"
+                                       Visibility="{Binding IsOnSale,
+                                                    Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="{Binding Item.Game.Name}" Foreground="LightGray"/>
+                                    <TextBlock Text="{Binding Item.Type}" Foreground="LightGray"/>
+                                    <TextBlock Text="{Binding Item.Rarity}" Foreground="LightBlue"/>
+                                    <TextBlock Text="{Binding Item.Description}"
+                                        TextWrapping="Wrap"
+                                        Foreground="White"
+                                        Margin="0,3,0,0"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="1"
+                                    Text="{Binding AcquiredAt, StringFormat='Получено: {0:d}'}"
+                                    Foreground="Gray"
+                                    Margin="0,5,0,0"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+
+            <!-- Правая панель: оформление продажи -->
+            <Border Grid.Column="1"
+                    Margin="10,0,0,0"
+                    Padding="10"
+                    Background="#FF2B2B2B"
+                    CornerRadius="5">
+                <StackPanel>
+                    <TextBlock Text="Выставление на продажу"
+                               Foreground="White"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="{Binding SelectedInventoryItem.Item.Name}"
+                               Foreground="White"
+                               FontSize="14"
+                               FontWeight="Bold"/>
+                    <TextBlock Text="{Binding SelectedInventoryItem.Item.Game.Name}"
+                               Foreground="LightGray"/>
+                    <TextBlock Text="{Binding SelectedInventoryItem.Item.Description}"
+                               TextWrapping="Wrap"
+                               Foreground="White"
+                               Margin="0,5,0,5"/>
+
+                    <TextBlock Text="{Binding SelectedInventoryItem.Item.Rarity}"
+                               Foreground="LightBlue"/>
+
+                    <TextBlock Text="Статистика по ценам"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Margin="0,10,0,3"/>
+
+                    <TextBlock Text="{Binding InternalBestPriceText}"
+                        Foreground="LightGray"
+                        TextWrapping="Wrap"
+                        Margin="0,0,0,2"/>
+
+                    <TextBlock Text="{Binding ExternalBestPriceText}"
+                        Foreground="LightGray"
+                        TextWrapping="Wrap"
+                        Margin="0,0,0,8"/>
+
+
+                    <TextBlock Text="Цена лота:"
+                        Foreground="White"
+                        Margin="0,10,0,3"/>
+                    <TextBox Text="{Binding ListingPriceText, UpdateSourceTrigger=PropertyChanged}"
+                        Height="26"
+                        Margin="0,0,0,5"/>
+
+                    <TextBlock Text="Вы получите:"
+                        TextWrapping="Wrap"
+                        Foreground="White"
+                        Margin="0,0,0,3"/>
+                    <TextBlock Text="{Binding ExpectedPayoutText}"
+                        TextWrapping="Wrap"
+                        Foreground="LightGreen"
+                        Margin="0,0,0,10"/>
+
+                    <WrapPanel Orientation="Horizontal">
+                        <Button Content="Выставить на продажу"
+                            Command="{Binding CreateListingCommand}"
+                            Height="32"
+                            Width="160"
+                            Margin="0,0,10,0"/>
+
+                        <Button Content="Снять с продажи"
+                            Command="{Binding RemoveFromSaleCommand}"
+                            Height="32"
+                            Width="140"
+                            Margin="0,1,0,0"/>
+                    </WrapPanel>
+
+
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Статусная строка -->
+        <Border Grid.Row="2"
+                Background="#FF303030"
+                CornerRadius="3"
+                Padding="5"
+                Margin="0,10,0,0">
+            <TextBlock Text="{Binding StatusMessage}"
+                       Foreground="White"/>
+        </Border>
+    </Grid>
+</UserControl>

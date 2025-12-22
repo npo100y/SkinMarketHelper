@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36705.20 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkinMarketHelper", "SkinMarketHelper\SkinMarketHelper.csproj", "{62192D83-146A-423C-A1E0-6B96DB322B7D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{62192D83-146A-423C-A1E0-6B96DB322B7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62192D83-146A-423C-A1E0-6B96DB322B7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62192D83-146A-423C-A1E0-6B96DB322B7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62192D83-146A-423C-A1E0-6B96DB322B7D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E9652B24-345A-4E88-86BC-83584FBC73E5}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,223 @@
+﻿<UserControl x:Class="SkinMarketHelper.Views.CatalogView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="900">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Левая панель фильтров -->
+        <Border Grid.Column="0"
+                Background="#FF2D2D2D"
+                CornerRadius="5"
+                Padding="10"
+                Margin="0,0,10,0">
+            <StackPanel>
+                <TextBlock Text="Фильтры"
+                           Foreground="White"
+                           FontSize="14"
+                           FontWeight="Bold"
+                           Margin="0,0,0,10"/>
+
+                <TextBlock Text="Игра"
+                           Foreground="White"
+                           Margin="0,0,0,3"/>
+                <ComboBox ItemsSource="{Binding Games}"
+                          SelectedItem="{Binding SelectedGame}"
+                          DisplayMemberPath="Name"
+                          Height="26"
+                          Margin="0,0,0,8"/>
+
+                <TextBlock Text="Тип"
+                           Foreground="White"
+                           Margin="0,0,0,3"/>
+                <ComboBox ItemsSource="{Binding Types}"
+                          SelectedItem="{Binding SelectedType}"
+                          Height="26"
+                          Margin="0,0,0,8"/>
+
+                <TextBlock Text="Редкость"
+                           Foreground="White"
+                           Margin="0,0,0,3"/>
+                <ComboBox ItemsSource="{Binding Rarities}"
+                          SelectedItem="{Binding SelectedRarity}"
+                          Height="26"
+                          Margin="0,0,0,8"/>
+
+                <TextBlock Text="Цена (от - до), ₽"
+                           Foreground="White"
+                           Margin="0,0,0,3"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBox Text="{Binding MinPriceText, UpdateSourceTrigger=PropertyChanged}"
+                             Width="80" Height="24" Margin="0,0,5,0"/>
+                    <TextBox Text="{Binding MaxPriceText, UpdateSourceTrigger=PropertyChanged}"
+                             Width="80" Height="24"/>
+                </StackPanel>
+
+                <TextBlock Text="Поиск по названию"
+                           Foreground="White"
+                           Margin="0,0,0,3"/>
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         Height="24"
+                         Margin="0,0,0,8"/>
+
+                <TextBlock Text="Сортировка"
+                           Foreground="White"
+                           Margin="0,0,0,3"/>
+                <ComboBox ItemsSource="{Binding SortOptions}"
+                          SelectedItem="{Binding SelectedSortOption}"
+                          DisplayMemberPath="DisplayName"
+                          Height="26"
+                          Margin="0,0,0,10"/>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Применить"
+                            Command="{Binding RefreshCommand}"
+                            Width="90"
+                            Height="26"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Обновить"
+                            Command="{Binding RefreshCommand}"
+                            Width="90"
+                            Height="26"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Правая часть: список и детали -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Список лотов -->
+                <ListBox Grid.Row="0"
+                    ItemsSource="{Binding Listings}"
+                    SelectedItem="{Binding SelectedListing}"
+                    BorderThickness="0"
+                    Background="Transparent"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,8,8"
+                    Padding="8"
+                    Background="#FF2D2D2D"
+                    CornerRadius="5"
+                    Width="260">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding InventoryItem.Item.Name}"
+                                            FontSize="14"
+                                            FontWeight="Bold"
+                                            Foreground="White"/>
+                                        <TextBlock Text="  [Ваш лот]"
+                                            Foreground="LightSkyBlue"
+                                            FontWeight="Bold"
+                                            Margin="5,0,0,0"
+                                            Visibility="{Binding IsOwnedByCurrentUser,
+                                                        Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="  [В корзине]"
+                                            Foreground="Orange"
+                                            FontWeight="Bold"
+                                            Margin="5,0,0,0"
+                                            Visibility="{Binding IsInCurrentUserCart,
+                                                        Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                    </StackPanel>
+
+
+                                    <TextBlock Text="{Binding InventoryItem.Item.Game.Name}"
+                                        Foreground="LightGray"/>
+                                    <TextBlock Text="{Binding InventoryItem.Item.Type}"
+                                        Foreground="LightGray"/>
+                                    <TextBlock Text="{Binding InventoryItem.Item.Rarity}"
+                                        Foreground="LightBlue"/>
+                                    <TextBlock Text="{Binding InventoryItem.Item.Description}"
+                                        TextWrapping="Wrap"
+                                        Foreground="White"
+                                        Margin="0,3,0,0"/>
+
+                                    <TextBlock Text="{Binding Seller.Username, StringFormat='Продавец: {0}'}"
+                                        Foreground="Gray"
+                                        Margin="0,3,0,0"/>
+
+                                    <TextBlock Text="{Binding Price, StringFormat='Цена: {0:F2} ₽'}"
+                                        Foreground="LightGreen"
+                                        FontSize="14"
+                                        FontWeight="Bold"
+                                        Margin="0,5,0,5"/>
+
+                                    <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right">
+                                        <Button Content="В корзину"
+                                            Width="80"
+                                            Height="24"
+                                            Margin="0,0,5,0"
+                                            Command="{Binding DataContext.AddToCartCommand,
+                                                              RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                            CommandParameter="{Binding}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOwnedByCurrentUser}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+
+                                        <Button Content="Купить"
+                                            Width="70"
+                                            Height="24"
+                                            Command="{Binding DataContext.BuyNowCommand,
+                                                              RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                            CommandParameter="{Binding}">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOwnedByCurrentUser}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <Border Grid.Row="1"
+                    Background="#FF303030"
+                    CornerRadius="3"
+                    Padding="5"
+                    Margin="0,10,0,0">
+                <TextBlock Text="{Binding StatusMessage}"
+                           Foreground="White"/>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
