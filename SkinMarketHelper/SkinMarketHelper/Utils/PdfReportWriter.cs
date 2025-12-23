@@ -99,7 +99,7 @@ namespace SkinMarketHelper.Utils
         {
             var topGames = context.MarketListings
                         .Where(ml => ml.Status == "Sold")
-                        .GroupBy(ml => ml.InventoryItem.Item.Game.Name)
+                        .GroupBy(ml => ml.UserInventoryItems.Items.Games.Name)
                         .Select(g => new
                         {
                             GameName = g.Key,

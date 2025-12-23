@@ -13,20 +13,29 @@ namespace SkinMarketHelper.Services
         {
             using (var context = new SkinMarketDbContext())
             {
-                return context.Users
+                var entities = context.Users
                     .OrderBy(u => u.Username)
+                    .ToList();
+
+                return entities
+                    .Select(u => u.ToModel())
                     .ToList();
             }
         }
+
         public IList<MarketListing> GetAllListings()
         {
             using (var context = new SkinMarketDbContext())
             {
-                return context.MarketListings
-                    .Include(ml => ml.InventoryItem.Item.Game)
-                    .Include(ml => ml.Seller)
-                    .Include(ml => ml.Buyer)
+                var entities = context.MarketListings
+                    .Include(ml => ml.UserInventoryItems.Items.Games)
+                    .Include(ml => ml.Users1)
+                    .Include(ml => ml.Users)
                     .OrderByDescending(ml => ml.ListedAt)
+                    .ToList();
+
+                return entities
+                    .Select(ml => ml.ToModel())
                     .ToList();
             }
         }
@@ -53,7 +62,7 @@ namespace SkinMarketHelper.Services
             {
                 using (var context = new SkinMarketDbContext())
                 {
-                    var user = context.Users.SingleOrDefault(u => u.UserId == userId);
+                    var user = context.Users.SingleOrDefault(u => u.UserID == userId);
                     if (user == null)
                     {
                         errorMessage = "Пользователь не найден.";
@@ -77,9 +86,9 @@ namespace SkinMarketHelper.Services
             {
                 return context.MarketListings
                     .Where(ml => ml.Status == "Active")
-                    .GroupBy(ml => ml.SellerUserId)
-                    .Select(g => new { SellerUserId = g.Key, Cnt = g.Count() })
-                    .ToDictionary(x => x.SellerUserId, x => x.Cnt);
+                    .GroupBy(ml => ml.SellerUserID)
+                    .Select(g => new { SellerUserId = g.Key, Count = g.Count() })
+                    .ToDictionary(x => x.SellerUserId, x => x.Count);
             }
         }
 
@@ -92,8 +101,8 @@ namespace SkinMarketHelper.Services
                 using (var context = new SkinMarketDbContext())
                 {
                     var listing = context.MarketListings
-                        .Include(ml => ml.InventoryItem)
-                        .SingleOrDefault(ml => ml.MarketListingId == listingId);
+                        .Include(ml => ml.UserInventoryItems)
+                        .SingleOrDefault(ml => ml.MarketListingID == listingId);
 
                     if (listing == null)
                     {
@@ -110,8 +119,9 @@ namespace SkinMarketHelper.Services
                     listing.Status = "Cancelled";
                     listing.UpdatedAt = DateTime.Now;
 
+                    // Удаляем все записи из корзин, связанные с этим лотом
                     var cartItems = context.ShoppingCartItems
-                        .Where(ci => ci.MarketListingId == listingId)
+                        .Where(ci => ci.MarketListingID == listingId)
                         .ToList();
 
                     context.ShoppingCartItems.RemoveRange(cartItems);

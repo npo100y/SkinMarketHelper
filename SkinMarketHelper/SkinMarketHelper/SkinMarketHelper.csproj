@@ -53,6 +53,8 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -72,21 +74,31 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="DAL\Entities\BalanceHistory.cs" />
+    <Compile Include="DAL\Entities\Games.cs" />
+    <Compile Include="DAL\Entities\Items.cs" />
+    <Compile Include="DAL\Entities\MarketListings.cs" />
+    <Compile Include="DAL\Entities\Marketplaces.cs" />
+    <Compile Include="DAL\Entities\PriceListings.cs" />
+    <Compile Include="DAL\Entities\ShoppingCartItems.cs" />
+    <Compile Include="DAL\Interfaces\ISkinMarketRepository.cs" />
     <Compile Include="DAL\SkinMarketDbContext.cs" />
-    <Compile Include="DAL\SkinMarketRepository.cs" />
+    <Compile Include="DAL\Repositories\SkinMarketRepository.cs" />
+    <Compile Include="DAL\Entities\sysdiagrams.cs" />
+    <Compile Include="DAL\Entities\UserInventoryItems.cs" />
+    <Compile Include="DAL\Entities\Users.cs" />
     <Compile Include="Models\BalanceHistory.cs" />
     <Compile Include="Models\Game.cs" />
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\MarketListing.cs" />
-    <Compile Include="Models\MarketListing.Partial.cs" />
     <Compile Include="Models\Marketplace.cs" />
     <Compile Include="Models\PriceComparisonEntry.cs" />
     <Compile Include="Models\PriceListing.cs" />
     <Compile Include="Models\ShoppingCartItem.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\UserInventoryItem.cs" />
-    <Compile Include="Models\UserInventoryItem.Partial.cs" />
     <Compile Include="Services\AdminService.cs" />
+    <Compile Include="Services\EntityToModelMapper.cs" />
     <Compile Include="Services\MarketService.cs" />
     <Compile Include="Services\ReportService.cs" />
     <Compile Include="Services\UserService.cs" />

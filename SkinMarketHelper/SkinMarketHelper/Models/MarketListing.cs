@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SkinMarketHelper.Models
 {
@@ -19,5 +20,8 @@ namespace SkinMarketHelper.Models
         public UserInventoryItem InventoryItem { get; set; }
         public User Seller { get; set; }
         public User Buyer { get; set; }
+
+        public bool IsInCurrentUserCart { get; set; }
+        public bool IsOwnedByCurrentUser { get; set; }
     }
 }

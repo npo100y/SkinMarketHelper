@@ -13,17 +13,23 @@ namespace SkinMarketHelper.Services
             using (var context = new SkinMarketDbContext())
             {
                 var repo = new SkinMarketRepository(context);
-                return repo.GetUserById(userId);
+                var entity = repo.GetUserById(userId);
+                return entity?.ToModel();
             }
         }
+
         public List<UserInventoryItem> GetUserInventory(int userId)
         {
             using (var context = new SkinMarketDbContext())
             {
                 var repo = new SkinMarketRepository(context);
-                return repo.GetUserInventory(userId);
+                var entities = repo.GetUserInventory(userId);
+                return entities
+                    .Select(ii => ii.ToModel(includeOwner: false, includeItem: true))
+                    .ToList();
             }
         }
+
         public User Login(string login, out string errorMessage)
         {
             errorMessage = null;
@@ -40,16 +46,17 @@ namespace SkinMarketHelper.Services
             {
                 using (var context = new SkinMarketDbContext())
                 {
-                    var user = context.Users
-                        .FirstOrDefault(u => u.SteamId64 == login || u.Username == login);
+                    // Ищем либо по SteamID64, либо по Username
+                    var userEntity = context.Users
+                        .FirstOrDefault(u => u.SteamID64 == login || u.Username == login);
 
-                    if (user == null)
+                    if (userEntity == null)
                     {
                         errorMessage = "Пользователь не найден.";
                         return null;
                     }
 
-                    return user;
+                    return userEntity.ToModel();
                 }
             }
             catch (Exception ex)
@@ -58,21 +65,30 @@ namespace SkinMarketHelper.Services
                 return null;
             }
         }
+
         public List<ShoppingCartItem> GetUserCart(int userId)
         {
             using (var context = new SkinMarketDbContext())
             {
                 var repo = new SkinMarketRepository(context);
-                return repo.GetUserCart(userId);
+                var entities = repo.GetUserCart(userId);
+                return entities
+                    .Select(ci => ci.ToModel())
+                    .ToList();
             }
         }
+
         public IList<BalanceHistory> GetUserBalanceHistory(int userId)
         {
             using (var context = new SkinMarketDbContext())
             {
-                return context.BalanceHistory
-                    .Where(b => b.UserId == userId)
+                var entities = context.BalanceHistory
+                    .Where(b => b.UserID == userId)
                     .OrderByDescending(b => b.CreatedAt)
+                    .ToList();
+
+                return entities
+                    .Select(b => b.ToModel())
                     .ToList();
             }
         }
@@ -83,7 +99,7 @@ namespace SkinMarketHelper.Services
 
             if (amount <= 0)
             {
-                errorMessage = "Сумма вывода должна быть больше нуля.";
+                errorMessage = "Сумма должна быть положительной.";
                 return false;
             }
 
@@ -91,27 +107,27 @@ namespace SkinMarketHelper.Services
             {
                 using (var context = new SkinMarketDbContext())
                 {
-                    var user = context.Users.SingleOrDefault(u => u.UserId == userId);
+                    var user = context.Users.SingleOrDefault(u => u.UserID == userId);
                     if (user == null)
                     {
                         errorMessage = "Пользователь не найден.";
                         return false;
                     }
 
-                    if (user.Balance < amount)
+                    if ((user.Balance ?? 0m) < amount)
                     {
-                        errorMessage = "Недостаточно средств для вывода.";
+                        errorMessage = "Недостаточно средств на балансе.";
                         return false;
                     }
 
-                    user.Balance -= amount;
+                    user.Balance = (user.Balance ?? 0m) - amount;
 
-                    context.BalanceHistory.Add(new BalanceHistory
+                    context.BalanceHistory.Add(new SkinMarketHelper.DAL.Entities.BalanceHistory
                     {
-                        UserId = userId,
+                        UserID = userId,
                         Amount = -amount,
                         Type = "Вывод",
-                        Description = "Вывод средств (демонстрационный сценарий)",
+                        Description = $"Вывод средств {amount:0.00}",
                         CreatedAt = DateTime.Now
                     });
 
@@ -121,17 +137,18 @@ namespace SkinMarketHelper.Services
             }
             catch (Exception ex)
             {
-                errorMessage = "Ошибка при выводе средств: " + ex.Message;
+                errorMessage = "Ошибка при обращении к базе данных: " + ex.Message;
                 return false;
             }
         }
+
         public bool TopUpBalance(int userId, decimal amount, out string errorMessage)
         {
             errorMessage = null;
 
             if (amount <= 0)
             {
-                errorMessage = "Сумма пополнения должна быть больше нуля.";
+                errorMessage = "Сумма должна быть положительной.";
                 return false;
             }
 
@@ -139,21 +156,21 @@ namespace SkinMarketHelper.Services
             {
                 using (var context = new SkinMarketDbContext())
                 {
-                    var user = context.Users.SingleOrDefault(u => u.UserId == userId);
+                    var user = context.Users.SingleOrDefault(u => u.UserID == userId);
                     if (user == null)
                     {
                         errorMessage = "Пользователь не найден.";
                         return false;
                     }
 
-                    user.Balance += amount;
+                    user.Balance = (user.Balance ?? 0m) + amount;
 
-                    context.BalanceHistory.Add(new BalanceHistory
+                    context.BalanceHistory.Add(new SkinMarketHelper.DAL.Entities.BalanceHistory
                     {
-                        UserId = userId,
+                        UserID = userId,
                         Amount = amount,
                         Type = "Пополнение",
-                        Description = "Пополнение через демонстрационный сценарий",
+                        Description = $"Пополнение баланса на {amount:0.00}",
                         CreatedAt = DateTime.Now
                     });
 
@@ -163,7 +180,7 @@ namespace SkinMarketHelper.Services
             }
             catch (Exception ex)
             {
-                errorMessage = "Ошибка пополнения баланса: " + ex.Message;
+                errorMessage = "Ошибка при обращении к базе данных: " + ex.Message;
                 return false;
             }
         }

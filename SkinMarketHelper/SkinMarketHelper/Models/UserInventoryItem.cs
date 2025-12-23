@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SkinMarketHelper.Models
 {
@@ -14,5 +15,8 @@ namespace SkinMarketHelper.Models
 
         public User User { get; set; }
         public Item Item { get; set; }
+
+        public bool IsOnSale { get; set; }
+        public decimal? ActiveListingPrice { get; set; }
     }
 }

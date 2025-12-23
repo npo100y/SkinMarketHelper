@@ -15,7 +15,8 @@ namespace SkinMarketHelper.Services
             using (var context = new SkinMarketDbContext())
             {
                 var repo = new SkinMarketRepository(context);
-                return repo.GetAllGames();
+                var entities = repo.GetAllGames();
+                return entities.Select(g => g.ToModel()).ToList();
             }
         }
         public List<MarketListing> GetCatalog(int? gameId, string searchText, string sortBy)
@@ -27,14 +28,14 @@ namespace SkinMarketHelper.Services
 
                 if (gameId.HasValue)
                 {
-                    query = query.Where(ml => ml.InventoryItem.Item.GameId == gameId.Value);
+                    query = query.Where(ml => ml.UserInventoryItems.Items.GameID == gameId.Value);
                 }
 
                 if (!string.IsNullOrWhiteSpace(searchText))
                 {
                     searchText = searchText.Trim();
                     query = query.Where(ml =>
-                        ml.InventoryItem.Item.Name.Contains(searchText));
+                        ml.UserInventoryItems.Items.Name.Contains(searchText));
                 }
 
                 switch (sortBy)
@@ -46,13 +47,15 @@ namespace SkinMarketHelper.Services
                         query = query.OrderByDescending(ml => ml.Price);
                         break;
                     default:
-                        query = query.OrderBy(ml => ml.MarketListingId);
+                        query = query.OrderBy(ml => ml.MarketListingID);
                         break;
                 }
 
-                return query.ToList();
+                var entities = query.ToList();
+                return entities.Select(ml => ml.ToModel()).ToList();
             }
         }
+
         public bool AddToCart(int userId, int listingId, out string errorMessage)
         {
             errorMessage = null;
@@ -80,19 +83,20 @@ namespace SkinMarketHelper.Services
                     var existing = repo.GetCartItem(userId, listingId);
                     if (existing != null)
                     {
-                        errorMessage = "Этот товар уже в корзине.";
+                        errorMessage = "Этот лот уже есть в корзине.";
                         return false;
                     }
 
-                    var cartItem = new ShoppingCartItem
+                    var cartItemEntity = new SkinMarketHelper.DAL.Entities.ShoppingCartItems
                     {
-                        UserId = userId,
-                        MarketListingId = listingId,
+                        UserID = userId,
+                        MarketListingID = listingId,
                         AddedAt = DateTime.Now
                     };
 
-                    repo.AddCartItem(cartItem);
+                    repo.AddCartItem(cartItemEntity);
                     repo.SaveChanges();
+
                     return true;
                 }
             }
@@ -102,6 +106,7 @@ namespace SkinMarketHelper.Services
                 return false;
             }
         }
+
         public bool RemoveFromCart(int userId, int listingId, out string errorMessage)
         {
             errorMessage = null;
@@ -141,13 +146,13 @@ namespace SkinMarketHelper.Services
                 {
                     var listing = context.MarketListings
                         .SingleOrDefault(ml =>
-                            ml.InventoryItemId == inventoryItemId &&
-                            ml.SellerUserId == sellerUserId &&
+                            ml.InventoryItemID == inventoryItemId &&
+                            ml.SellerUserID == sellerUserId &&
                             ml.Status == "Active");
 
                     if (listing == null)
                     {
-                        errorMessage = "Активный лот для этого предмета не найден.";
+                        errorMessage = "Активный лот не найден.";
                         return false;
                     }
 
@@ -155,20 +160,22 @@ namespace SkinMarketHelper.Services
                     listing.UpdatedAt = DateTime.Now;
 
                     var cartItems = context.ShoppingCartItems
-                        .Where(ci => ci.MarketListingId == listing.MarketListingId)
+                        .Where(ci => ci.MarketListingID == listing.MarketListingID)
                         .ToList();
-                    context.ShoppingCartItems.RemoveRange(cartItems);
 
+                    context.ShoppingCartItems.RemoveRange(cartItems);
                     context.SaveChanges();
+
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                errorMessage = "Ошибка при снятии предмета с продажи: " + ex.Message;
+                errorMessage = "Ошибка при отмене лота: " + ex.Message;
                 return false;
             }
         }
+
 
         public bool BuyListing(int buyerUserId, int listingId, out string errorMessage)
         {
@@ -190,7 +197,7 @@ namespace SkinMarketHelper.Services
 
                     var listing = repo.GetMarketListingById(listingId);
 
-                    if (listing.SellerUserId == buyerUserId)
+                    if (listing.SellerUserID == buyerUserId)
                     {
                         errorMessage = "Нельзя купить собственный лот.";
                         return false;
@@ -202,7 +209,7 @@ namespace SkinMarketHelper.Services
                         return false;
                     }
 
-                    var seller = repo.GetUserById(listing.SellerUserId);
+                    var seller = repo.GetUserById(listing.SellerUserID);
                     if (seller == null)
                     {
                         errorMessage = "Продавец не найден.";
@@ -221,38 +228,38 @@ namespace SkinMarketHelper.Services
                     buyer.Balance -= listing.Price;
                     seller.Balance += sellerAmount;
 
-                    context.BalanceHistory.Add(new BalanceHistory
+                    context.BalanceHistory.Add(new SkinMarketHelper.DAL.Entities.BalanceHistory
                     {
-                        UserId = buyer.UserId,
+                        UserID = buyer.UserID,
                         Amount = -listing.Price,
                         Type = "Покупка",
-                        Description = $"Покупка лота #{listing.MarketListingId}",
+                        Description = $"Покупка лота #{listing.MarketListingID}",
                         CreatedAt = DateTime.Now
                     });
 
-                    context.BalanceHistory.Add(new BalanceHistory
+                    context.BalanceHistory.Add(new SkinMarketHelper.DAL.Entities.BalanceHistory
                     {
-                        UserId = seller.UserId,
+                        UserID = seller.UserID,
                         Amount = sellerAmount,
                         Type = "Продажа",
-                        Description = $"Продажа лота #{listing.MarketListingId} (комиссия сервиса 5%)",
+                        Description = $"Продажа лота #{listing.MarketListingID} (комиссия сервиса 5%)",
                         CreatedAt = DateTime.Now
                     });
 
-                    var inventoryItem = listing.InventoryItem;
+                    var inventoryItem = listing.UserInventoryItems;
                     if (inventoryItem != null)
                     {
-                        inventoryItem.UserId = buyerUserId;
+                        inventoryItem.UserID = buyerUserId;
                         inventoryItem.AcquiredAt = DateTime.Now;
                     }
 
-                    listing.BuyerUserId = buyerUserId;
+                    listing.BuyerUserID = buyerUserId;
                     listing.Status = "Sold";
                     listing.SoldAt = DateTime.Now;
                     listing.UpdatedAt = DateTime.Now;
 
                     var cartItems = context.ShoppingCartItems
-                        .Where(ci => ci.MarketListingId == listingId)
+                        .Where(ci => ci.MarketListingID == listingId)
                         .ToList();
                     context.ShoppingCartItems.RemoveRange(cartItems);
 
@@ -277,18 +284,18 @@ namespace SkinMarketHelper.Services
             using (var context = new SkinMarketDbContext())
             {
                 var query = context.PriceListings
-                    .Include(pl => pl.Item.Game)
-                    .Include(pl => pl.Marketplace)
+                    .Include(pl => pl.Items.Games)
+                    .Include(pl => pl.Marketplaces)
                     .AsQueryable();
 
                 if (gameId.HasValue)
-                    query = query.Where(pl => pl.Item.GameId == gameId.Value);
+                    query = query.Where(pl => pl.Items.GameID == gameId.Value);
 
                 if (!string.IsNullOrWhiteSpace(typeFilter) && typeFilter != "Все")
-                    query = query.Where(pl => pl.Item.Type == typeFilter);
+                    query = query.Where(pl => pl.Items.Type == typeFilter);
 
                 if (!string.IsNullOrWhiteSpace(rarityFilter) && rarityFilter != "Все")
-                    query = query.Where(pl => pl.Item.Rarity == rarityFilter);
+                    query = query.Where(pl => pl.Items.Rarity == rarityFilter);
 
                 if (minPrice.HasValue)
                     query = query.Where(pl => pl.Price >= minPrice.Value);
@@ -300,23 +307,49 @@ namespace SkinMarketHelper.Services
                 {
                     searchText = searchText.Trim();
                     query = query.Where(pl =>
-                        pl.Item.Name.Contains(searchText) ||
-                        pl.Item.SteamMarketHashName.Contains(searchText));
+                        pl.Items.Name.Contains(searchText) ||
+                        pl.Items.SteamMarketHashName.Contains(searchText));
                 }
 
-                var list = query.ToList();
+                var list = query
+                    .Where(pl => pl.Items != null)
+                    .ToList();
 
                 var result = list
-                    .GroupBy(pl => pl.ItemId)
+                    .GroupBy(pl => pl.ItemID)
                     .Select(g =>
                     {
                         var best = g.OrderBy(pl => pl.Price).First();
+                        var itemEntity = best.Items;
+                        var gameEntity = itemEntity?.Games;
+
+                        var itemModel = new Item
+                        {
+                            ItemId = itemEntity.ItemID,
+                            GameId = itemEntity.GameID,
+                            Type = itemEntity.Type,
+                            Name = itemEntity.Name,
+                            Description = itemEntity.Description,
+                            Rarity = itemEntity.Rarity,
+                            IconUrl = itemEntity.IconUrl,
+                            SteamMarketHashName = itemEntity.SteamMarketHashName,
+                            Game = gameEntity == null
+                                ? null
+                                : new Game
+                                {
+                                    GameId = gameEntity.GameID,
+                                    AppId = gameEntity.AppID,
+                                    Name = gameEntity.Name,
+                                    LogoUrl = gameEntity.LogoUrl
+                                }
+                        };
+
                         return new PriceComparisonEntry
                         {
-                            Item = best.Item,
+                            Item = itemModel,
                             BestPrice = best.Price,
                             CurrencyCode = best.CurrencyCode,
-                            BestMarketplaceName = best.Marketplace.Name,
+                            BestMarketplaceName = best.Marketplaces?.Name,
                             BestMarketplaceUrl = best.ListingUrl,
                             UpdatedAt = best.UpdatedAt
                         };
@@ -335,10 +368,13 @@ namespace SkinMarketHelper.Services
                 var query = context.Items.AsQueryable();
 
                 if (gameId.HasValue)
-                    query = query.Where(i => i.GameId == gameId.Value);
+                {
+                    query = query.Where(i => i.GameID == gameId.Value);
+                }
 
                 return query
                     .Select(i => i.Type)
+                    .Where(t => t != null)
                     .Distinct()
                     .OrderBy(t => t)
                     .ToList();
@@ -352,7 +388,7 @@ namespace SkinMarketHelper.Services
                 var query = context.Items.AsQueryable();
 
                 if (gameId.HasValue)
-                    query = query.Where(i => i.GameId == gameId.Value);
+                    query = query.Where(i => i.GameID == gameId.Value);
 
                 return query
                     .Select(i => i.Rarity)
@@ -370,8 +406,8 @@ namespace SkinMarketHelper.Services
                 if (!ids.Any()) return new List<int>();
 
                 return context.MarketListings
-                    .Where(ml => ids.Contains(ml.InventoryItemId) && ml.Status == "Active")
-                    .Select(ml => ml.InventoryItemId)
+                    .Where(ml => ids.Contains(ml.InventoryItemID) && ml.Status == "Active")
+                    .Select(ml => ml.InventoryItemID)
                     .Distinct()
                     .ToList();
             }
@@ -386,10 +422,10 @@ namespace SkinMarketHelper.Services
                     return new Dictionary<int, decimal>();
 
                 return context.MarketListings
-                    .Where(ml => ids.Contains(ml.InventoryItemId) && ml.Status == "Active")
-                    .Select(ml => new { ml.InventoryItemId, ml.Price })
+                    .Where(ml => ids.Contains(ml.InventoryItemID) && ml.Status == "Active")
+                    .Select(ml => new { ml.InventoryItemID, ml.Price })
                     .ToList()
-                    .GroupBy(x => x.InventoryItemId)
+                    .GroupBy(x => x.InventoryItemID)
                     .ToDictionary(g => g.Key, g => g.First().Price);
             }
         }
@@ -399,44 +435,43 @@ namespace SkinMarketHelper.Services
         {
             using (var context = new SkinMarketDbContext())
             {
-                var best = context.MarketListings
-                    .Include(ml => ml.InventoryItem)
-                    .Where(ml => ml.Status == "Active" && ml.InventoryItem.ItemId == itemId)
+                return context.MarketListings
+                    .Where(ml => ml.Status == "Active" &&
+                                 ml.UserInventoryItems.ItemID == itemId)
                     .OrderBy(ml => ml.Price)
                     .Select(ml => (decimal?)ml.Price)
                     .FirstOrDefault();
-
-                return best;
             }
         }
 
+
         public decimal? GetBestExternalPriceForItem(int itemId, out string marketplaceName)
         {
+            marketplaceName = null;
+
             using (var context = new SkinMarketDbContext())
             {
                 var best = context.PriceListings
-                    .Include(pl => pl.Marketplace)
-                    .Where(pl => pl.ItemId == itemId)
+                    .Include(pl => pl.Marketplaces)
+                    .Where(pl => pl.ItemID == itemId)
                     .OrderBy(pl => pl.Price)
                     .FirstOrDefault();
 
                 if (best == null)
-                {
-                    marketplaceName = null;
                     return null;
-                }
 
-                marketplaceName = best.Marketplace?.Name;
+                marketplaceName = best.Marketplaces?.Name;
                 return best.Price;
             }
         }
+
         public bool CreateListingFromInventoryItem(int sellerUserId, int inventoryItemId, decimal price, out string errorMessage)
         {
             errorMessage = null;
 
-            if (price < MinListingPrice)
+            if (price <= 0)
             {
-                errorMessage = $"Минимальная цена выставления — {MinListingPrice:F2} ₽.";
+                errorMessage = "Цена должна быть положительной.";
                 return false;
             }
 
@@ -446,65 +481,41 @@ namespace SkinMarketHelper.Services
                 {
                     var repo = new SkinMarketRepository(context);
 
-                    var seller = repo.GetUserById(sellerUserId);
-                    if (seller == null)
-                    {
-                        errorMessage = "Продавец не найден.";
-                        return false;
-                    }
-
                     var inventoryItem = context.UserInventoryItems
-                        .SingleOrDefault(ii => ii.InventoryItemId == inventoryItemId && ii.UserId == sellerUserId);
+                        .SingleOrDefault(ii =>
+                            ii.InventoryItemID == inventoryItemId &&
+                            ii.UserID == sellerUserId);
 
                     if (inventoryItem == null)
                     {
-                        errorMessage = "Предмет инвентаря не найден у текущего пользователя.";
-                        return false;
-                    }
-
-                    if (!inventoryItem.IsAvailableForTrade)
-                    {
-                        errorMessage = "Предмет недоступен для обмена.";
+                        errorMessage = "Инвентарь не найден.";
                         return false;
                     }
 
                     var existingListing = context.MarketListings
-                        .SingleOrDefault(ml => ml.InventoryItemId == inventoryItemId);
+                        .SingleOrDefault(ml =>
+                            ml.InventoryItemID == inventoryItemId &&
+                            ml.Status == "Active");
 
-                    if (existingListing == null)
+                    if (existingListing != null)
                     {
-                        var newListing = new MarketListing
-                        {
-                            InventoryItemId = inventoryItemId,
-                            SellerUserId = sellerUserId,
-                            BuyerUserId = null,
-                            Price = price,
-                            ListedAt = DateTime.Now,
-                            SoldAt = null,
-                            Status = "Active",
-                            UpdatedAt = DateTime.Now
-                        };
-
-                        repo.AddMarketListing(newListing);
-                    }
-                    else
-                    {
-                        if (existingListing.Status == "Active")
-                        {
-                            errorMessage = "Этот предмет уже выставлен на продажу.";
-                            return false;
-                        }
-
-                        existingListing.SellerUserId = sellerUserId;
-                        existingListing.BuyerUserId = null;
-                        existingListing.Price = price;
-                        existingListing.ListedAt = DateTime.Now;
-                        existingListing.SoldAt = null;
-                        existingListing.Status = "Active";
-                        existingListing.UpdatedAt = DateTime.Now;
+                        errorMessage = "Для этого предмета уже существует активный лот.";
+                        return false;
                     }
 
+                    var listingEntity = new SkinMarketHelper.DAL.Entities.MarketListings
+                    {
+                        InventoryItemID = inventoryItemId,
+                        SellerUserID = sellerUserId,
+                        Price = price,
+                        ListedAt = DateTime.Now,
+                        Status = "Active",
+                        UpdatedAt = DateTime.Now
+                    };
+
+                    repo.AddMarketListing(listingEntity);
                     repo.SaveChanges();
+
                     return true;
                 }
             }
@@ -514,6 +525,7 @@ namespace SkinMarketHelper.Services
                 return false;
             }
         }
+
 
     }
 }
