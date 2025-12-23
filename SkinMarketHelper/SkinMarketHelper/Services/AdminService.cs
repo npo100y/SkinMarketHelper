@@ -71,6 +71,18 @@ namespace SkinMarketHelper.Services
                 return false;
             }
         }
+        public IDictionary<int, int> GetActiveListingCountsBySeller()
+        {
+            using (var context = new SkinMarketDbContext())
+            {
+                return context.MarketListings
+                    .Where(ml => ml.Status == "Active")
+                    .GroupBy(ml => ml.SellerUserId)
+                    .Select(g => new { SellerUserId = g.Key, Cnt = g.Count() })
+                    .ToDictionary(x => x.SellerUserId, x => x.Cnt);
+            }
+        }
+
         public bool CancelListing(int listingId, out string errorMessage)
         {
             errorMessage = null;

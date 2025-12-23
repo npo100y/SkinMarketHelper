@@ -6,5 +6,7 @@ namespace SkinMarketHelper.Models
     {
         [NotMapped]
         public bool IsOnSale { get; set; }
+        [NotMapped]
+        public decimal? ActiveListingPrice { get; set; }
     }
 }

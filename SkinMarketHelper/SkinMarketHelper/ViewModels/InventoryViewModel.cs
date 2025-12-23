@@ -32,8 +32,11 @@ namespace SkinMarketHelper.ViewModels
                 if (SetProperty(ref _selectedInventoryItem, value))
                 {
                     ListingPriceText = string.Empty;
-                    ExpectedPayoutText = string.Empty;
                     UpdatePriceHints();
+
+                    UpdateExpectedPayoutForSelectedItem();
+
+                    CreateListingCommand?.RaiseCanExecuteChanged();
                     RemoveFromSaleCommand?.RaiseCanExecuteChanged();
                 }
             }
@@ -75,7 +78,8 @@ namespace SkinMarketHelper.ViewModels
                         decimal.TryParse(_listingPriceText.Replace(',', '.'),
                             System.Globalization.NumberStyles.Any,
                             System.Globalization.CultureInfo.InvariantCulture,
-                            out var price) && price > 0)
+                            out var price) && price >= MarketService.MinListingPrice)
+
                     {
                         var sellerAmount = Math.Round(price * 0.95m, 2);
                         ExpectedPayoutText = $"{sellerAmount:F2} ₽ (с учётом комиссии 5%)";
@@ -106,11 +110,11 @@ namespace SkinMarketHelper.ViewModels
             _marketService = new MarketService();
 
             RefreshCommand = new RelayCommand(_ => Refresh());
-            CreateListingCommand = new RelayCommand(_ => CreateListing(), _ => SelectedInventoryItem != null);
+            CreateListingCommand = new RelayCommand(_ => CreateListing(),_ => SelectedInventoryItem != null && !SelectedInventoryItem.IsOnSale);
             RemoveFromSaleCommand = new RelayCommand(_ => RemoveFromSale(), _ => SelectedInventoryItem != null && SelectedInventoryItem.IsOnSale);
 
             LoadGames();
-            RefreshInventory();
+            SelectedGame = Games.FirstOrDefault();
         }
 
         private void LoadGames()
@@ -118,6 +122,8 @@ namespace SkinMarketHelper.ViewModels
             Games.Clear();
             try
             {
+                Games.Add(new Game { GameId = 0, Name = "Все" });
+
                 var games = _marketService.GetGames();
                 foreach (var g in games)
                     Games.Add(g);
@@ -165,6 +171,20 @@ namespace SkinMarketHelper.ViewModels
                 StatusMessage = "Ошибка при загрузке статистики цен: " + ex.Message;
             }
         }
+        private void UpdateExpectedPayoutForSelectedItem()
+        {
+            if (SelectedInventoryItem?.IsOnSale == true && SelectedInventoryItem.ActiveListingPrice.HasValue)
+            {
+                var price = SelectedInventoryItem.ActiveListingPrice.Value;
+                var sellerAmount = Math.Round(price * 0.95m, 2);
+                ExpectedPayoutText = $"{sellerAmount:F2} ₽ (с учётом комиссии 5%)";
+            }
+            else
+            {
+                ExpectedPayoutText = string.Empty;
+            }
+        }
+
 
         private void RemoveFromSale()
         {
@@ -202,7 +222,7 @@ namespace SkinMarketHelper.ViewModels
             {
                 var items = _userService.GetUserInventory(_currentUser.UserId);
 
-                if (SelectedGame != null)
+                if (SelectedGame != null && SelectedGame.GameId != 0)
                 {
                     items = items
                         .Where(ii => ii.Item.GameId == SelectedGame.GameId)
@@ -210,13 +230,21 @@ namespace SkinMarketHelper.ViewModels
                 }
 
                 var ids = items.Select(ii => ii.InventoryItemId).ToList();
-                var onSaleIds = _marketService
-                    .GetActiveInventoryItemIdsWithActiveListings(ids)
-                    .ToHashSet();
+                var activePrices = _marketService.GetActiveListingPricesForInventoryItems(ids);
 
                 foreach (var item in items)
                 {
-                    item.IsOnSale = onSaleIds.Contains(item.InventoryItemId);
+                    if (activePrices.TryGetValue(item.InventoryItemId, out var price))
+                    {
+                        item.IsOnSale = true;
+                        item.ActiveListingPrice = price;
+                    }
+                    else
+                    {
+                        item.IsOnSale = false;
+                        item.ActiveListingPrice = null;
+                    }
+
                     InventoryItems.Add(item);
                 }
 
@@ -253,9 +281,9 @@ namespace SkinMarketHelper.ViewModels
                 return;
             }
 
-            if (price <= 0)
+            if (price <= MarketService.MinListingPrice)
             {
-                StatusMessage = "Цена должна быть больше нуля.";
+                StatusMessage = $"Минимальная цена выставления — {MarketService.MinListingPrice:F2} ₽.";
                 return;
             }
 

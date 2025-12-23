@@ -53,50 +53,62 @@
 
             <!-- Список элементов корзины -->
             <ListBox Grid.Column="0"
-                     ItemsSource="{Binding CartItems}"
-                     SelectedItem="{Binding SelectedCartItem}"
-                     BorderThickness="0"
-                     Background="Transparent">
+         ItemsSource="{Binding CartItems}"
+         SelectedItem="{Binding SelectedCartItem}"
+         BorderThickness="0"
+         Background="Transparent"
+         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,0,0,8"
-                                Padding="8"
-                                Background="#FF2D2D2D"
-                                CornerRadius="5">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="130"/>
-                                </Grid.ColumnDefinitions>
+                        <Border Margin="0,0,8,8"
+                            Padding="8"
+                            Background="#FF2D2D2D"
+                            CornerRadius="5"
+                            Width="260">
+                            <StackPanel>
+                                <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Name}"
+                                    FontSize="14"
+                                    FontWeight="Bold"
+                                    Foreground="White"/>
 
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Name}"
-                                               FontSize="14"
-                                               FontWeight="Bold"
-                                               Foreground="White"/>
-                                    <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Game.Name}"
-                                               Foreground="LightGray"/>
-                                    <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Type}"
-                                               Foreground="LightGray"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Game.Name}"
+                                    Foreground="LightGray"/>
+                                <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Type}"
+                                    Foreground="LightGray"/>
+                                <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Rarity}"
+                                    Foreground="LightBlue"/>
 
-                                <StackPanel Grid.Column="1"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding MarketListing.Price, StringFormat='{}{0:F2} ₽'}"
-                                               Foreground="LightGreen"
-                                               FontSize="14"
-                                               FontWeight="Bold"
-                                               HorizontalAlignment="Right"/>
-                                    <TextBlock Text="{Binding AddedAt, StringFormat='Добавлено: {0:g}'}"
-                                               Foreground="Gray"
-                                               HorizontalAlignment="Right"/>
-                                </StackPanel>
-                            </Grid>
+                                <TextBlock Text="{Binding MarketListing.InventoryItem.Item.Description}"
+                                    TextWrapping="Wrap"
+                                    Foreground="White"
+                                    Margin="0,3,0,0"/>
+
+                                <TextBlock Text="{Binding MarketListing.Seller.Username, StringFormat='Продавец: {0}'}"
+                                    Foreground="Gray"
+                                    Margin="0,3,0,0"/>
+
+                                <TextBlock Text="{Binding MarketListing.Price, StringFormat='Цена: {0:F2} ₽'}"
+                                    Foreground="LightGreen"
+                                    FontSize="14"
+                                    FontWeight="Bold"
+                                    Margin="0,6,0,0"/>
+
+                                <TextBlock Text="{Binding AddedAt, StringFormat='Добавлено: {0:g}'}"
+                                    Foreground="Gray"
+                                    Margin="0,3,0,0"/>
+                            </StackPanel>
                         </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
 
             <!-- Детали и действия -->
             <Border Grid.Column="1"

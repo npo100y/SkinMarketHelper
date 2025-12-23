@@ -61,6 +61,7 @@ namespace SkinMarketHelper.DAL
         {
             return _context.ShoppingCartItems
                 .Include(ci => ci.MarketListing.InventoryItem.Item.Game)
+                .Include(ci => ci.MarketListing.Seller)
                 .Where(ci => ci.UserId == userId)
                 .ToList();
         }

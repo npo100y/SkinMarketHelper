@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SkinMarketHelper.Models
 {
@@ -15,12 +16,27 @@ namespace SkinMarketHelper.Models
         public string Role { get; set; }
 
         private decimal _balance;
+        private int _activeListingsCount;
 
         public ICollection<BalanceHistory> BalanceHistory { get; set; }
         public ICollection<UserInventoryItem> InventoryItems { get; set; }
         public ICollection<MarketListing> SellListings { get; set; }
         public ICollection<MarketListing> BuyListings { get; set; }
         public ICollection<ShoppingCartItem> CartItems { get; set; }
+
+        [NotMapped]
+        public int ActiveListingsCount
+        {
+            get => _activeListingsCount;
+            set
+            {
+                if (_activeListingsCount != value)
+                {
+                    _activeListingsCount = value;
+                    OnPropertyChanged(nameof(ActiveListingsCount));
+                }
+            }
+        }
 
         public decimal Balance
         {

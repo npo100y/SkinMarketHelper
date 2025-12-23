@@ -97,14 +97,7 @@ namespace SkinMarketHelper.ViewModels
         public MarketListing SelectedListing
         {
             get => _selectedListing;
-            set
-            {
-                if (SetProperty(ref _selectedListing, value))
-                {
-                    AddToCartCommand?.RaiseCanExecuteChanged();
-                    BuyNowCommand?.RaiseCanExecuteChanged();
-                }
-            }
+            set => SetProperty(ref _selectedListing, value);
         }
 
         public string StatusMessage
@@ -129,16 +122,20 @@ namespace SkinMarketHelper.ViewModels
             RefreshListings();
 
             RefreshCommand = new RelayCommand(_ => Refresh());
-            AddToCartCommand = new RelayCommand(_ => AddToCart(), _ => SelectedListing != null);
-            BuyNowCommand = new RelayCommand(_ => BuyNow(), _ => SelectedListing != null);
+            AddToCartCommand = new RelayCommand(p => AddToCart(p as MarketListing),
+                                   p => p is MarketListing);
+
+            BuyNowCommand = new RelayCommand(p => BuyNow(p as MarketListing),
+                                             p => p is MarketListing);
+
         }
 
         private void InitSortOptions()
         {
             SortOptions.Clear();
             SortOptions.Add(new SortOption { DisplayName = "Без сортировки", Value = null });
-            SortOptions.Add(new SortOption { DisplayName = "Цена ↑", Value = "price_asc" });
-            SortOptions.Add(new SortOption { DisplayName = "Цена ↓", Value = "price_desc" });
+            SortOptions.Add(new SortOption { DisplayName = "По возрастанию", Value = "price_asc" });
+            SortOptions.Add(new SortOption { DisplayName = "По убыванию", Value = "price_desc" });
 
             SelectedSortOption = SortOptions.First();
         }
@@ -264,14 +261,14 @@ namespace SkinMarketHelper.ViewModels
         }
 
 
-        private void AddToCart()
+        private void AddToCart(MarketListing listing)
         {
-            if (SelectedListing == null)
+            if (listing == null)
                 return;
 
             StatusMessage = null;
 
-            if (_marketService.AddToCart(_currentUser.UserId, SelectedListing.MarketListingId, out var errorMessage))
+            if (_marketService.AddToCart(_currentUser.UserId, listing.MarketListingId, out var errorMessage))
             {
                 StatusMessage = "Товар добавлен в корзину.";
                 RefreshListings();
@@ -282,14 +279,14 @@ namespace SkinMarketHelper.ViewModels
             }
         }
 
-        private void BuyNow()
+        private void BuyNow(MarketListing listing)
         {
-            if (SelectedListing == null)
+            if (listing == null)
                 return;
 
             StatusMessage = null;
 
-            if (_marketService.BuyListing(_currentUser.UserId, SelectedListing.MarketListingId, out var errorMessage))
+            if (_marketService.BuyListing(_currentUser.UserId, listing.MarketListingId, out var errorMessage))
             {
                 StatusMessage = "Покупка успешно выполнена.";
                 RefreshListings();
@@ -299,5 +296,6 @@ namespace SkinMarketHelper.ViewModels
                 StatusMessage = errorMessage;
             }
         }
+
     }
 }

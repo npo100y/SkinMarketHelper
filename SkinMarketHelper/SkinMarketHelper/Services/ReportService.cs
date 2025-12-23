@@ -72,20 +72,5 @@ namespace SkinMarketHelper.Services
                 return false;
             }
         }
-
-        private void AddCell(PdfPTable table, string text, Font font, bool isHeader = false)
-        {
-            var cell = new PdfPCell(new Phrase(text, font))
-            {
-                Padding = 5,
-                HorizontalAlignment = Element.ALIGN_LEFT,
-                VerticalAlignment = Element.ALIGN_MIDDLE
-            };
-
-            if (isHeader)
-                cell.BackgroundColor = new BaseColor(220, 220, 220);
-
-            table.AddCell(cell);
-        }
     }
 }

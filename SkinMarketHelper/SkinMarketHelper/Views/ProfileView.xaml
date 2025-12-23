@@ -120,6 +120,15 @@
                     AlternatingRowBackground="#FF3B3B3B"
                     GridLinesVisibility="Horizontal"
                     HorizontalGridLinesBrush="#FF444444">
+
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#FF3A3A3A"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="FontWeight" Value="Bold"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Дата"
                                             Binding="{Binding CreatedAt, StringFormat={}{0:g}}"

@@ -96,8 +96,11 @@ namespace SkinMarketHelper.ViewModels
             try
             {
                 var users = _adminService.GetAllUsers();
+                var counts = _adminService.GetActiveListingCountsBySeller();
+
                 foreach (var u in users)
                 {
+                    u.ActiveListingsCount = counts.TryGetValue(u.UserId, out var c) ? c : 0;
                     Users.Add(u);
                 }
 
@@ -147,6 +150,7 @@ namespace SkinMarketHelper.ViewModels
                 SelectedUser.Role = SelectedUserRole;
                 OnPropertyChanged(nameof(SelectedUser));
                 StatusMessage = $"Роль пользователя {SelectedUser.Username} изменена на {SelectedUserRole}.";
+                Refresh();
             }
             else
             {
@@ -200,6 +204,7 @@ namespace SkinMarketHelper.ViewModels
                 SelectedListing.Status = "Cancelled";
                 OnPropertyChanged(nameof(SelectedListing));
                 StatusMessage = $"Лот #{SelectedListing.MarketListingId} отменён.";
+                Refresh();
             }
             else
             {

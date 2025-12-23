@@ -86,6 +86,9 @@
                             <DataGridTextColumn Header="Логин"
                                                 Binding="{Binding Username}"
                                                 Width="*"/>
+                            <DataGridTextColumn Header="Активные лоты"
+                                                Binding="{Binding ActiveListingsCount}"
+                                                Width="110"/>
                             <DataGridTextColumn Header="Роль"
                                                 Binding="{Binding Role}"
                                                 Width="80"/>

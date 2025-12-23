@@ -9,6 +9,7 @@ namespace SkinMarketHelper.Services
 {
     public class MarketService
     {
+        public const decimal MinListingPrice = 0.5m;
         public List<Game> GetGames()
         {
             using (var context = new SkinMarketDbContext())
@@ -376,6 +377,24 @@ namespace SkinMarketHelper.Services
             }
         }
 
+        public IDictionary<int, decimal> GetActiveListingPricesForInventoryItems(IEnumerable<int> inventoryItemIds)
+        {
+            using (var context = new SkinMarketDbContext())
+            {
+                var ids = inventoryItemIds?.ToList() ?? new List<int>();
+                if (!ids.Any())
+                    return new Dictionary<int, decimal>();
+
+                return context.MarketListings
+                    .Where(ml => ids.Contains(ml.InventoryItemId) && ml.Status == "Active")
+                    .Select(ml => new { ml.InventoryItemId, ml.Price })
+                    .ToList()
+                    .GroupBy(x => x.InventoryItemId)
+                    .ToDictionary(g => g.Key, g => g.First().Price);
+            }
+        }
+
+
         public decimal? GetBestInternalListingPriceForItem(int itemId)
         {
             using (var context = new SkinMarketDbContext())
@@ -415,9 +434,9 @@ namespace SkinMarketHelper.Services
         {
             errorMessage = null;
 
-            if (price <= 0)
+            if (price < MinListingPrice)
             {
-                errorMessage = "Цена должна быть больше нуля.";
+                errorMessage = $"Минимальная цена выставления — {MinListingPrice:F2} ₽.";
                 return false;
             }
 

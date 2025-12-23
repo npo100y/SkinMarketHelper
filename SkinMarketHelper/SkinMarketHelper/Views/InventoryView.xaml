@@ -73,16 +73,34 @@
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0">
+                                    <TextBlock Text="{Binding Item.Name}"
+                                        FontSize="14"
+                                        FontWeight="Bold"
+                                        Foreground="White"/>
+
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Item.Name}"
-                                       FontSize="14"
-                                       FontWeight="Bold"
-                                       Foreground="White"/>
-                                        <TextBlock Text="  [В продаже]"
-                                       Foreground="LightGreen"
-                                       Margin="5,0,0,0"
-                                       Visibility="{Binding IsOnSale,
-                                                    Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Margin="2,0,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="[Доступен для продажи]"/>
+                                                    <Setter Property="Foreground" Value="LightSkyBlue"/>
+
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOnSale}" Value="True">
+                                                            <Setter Property="Text" Value="[В продаже]"/>
+                                                            <Setter Property="Foreground" Value="LightGreen"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        
+                                        <TextBlock Text="{Binding ActiveListingPrice, StringFormat='  Цена: {0:F2} ₽'}"
+                                           Foreground="Khaki"
+                                           FontWeight="SemiBold"
+                                           Margin="5,0,0,0"
+                                           Visibility="{Binding IsOnSale,
+                                                        Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                     </StackPanel>
 
                                     <TextBlock Text="{Binding Item.Game.Name}" Foreground="LightGray"/>
@@ -151,9 +169,19 @@
                     <TextBlock Text="Цена лота:"
                         Foreground="White"
                         Margin="0,10,0,3"/>
+
                     <TextBox Text="{Binding ListingPriceText, UpdateSourceTrigger=PropertyChanged}"
                         Height="26"
-                        Margin="0,0,0,5"/>
+                        Margin="0,0,0,5"
+                        Visibility="{Binding SelectedInventoryItem.IsOnSale,
+                                            Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+
+                    <TextBlock Text="{Binding SelectedInventoryItem.ActiveListingPrice, StringFormat={}{0:F2} ₽}"
+                        Foreground="LightGreen"
+                        FontWeight="Bold"
+                        Margin="0,0,0,5"
+                        Visibility="{Binding SelectedInventoryItem.IsOnSale,
+                                            Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                     <TextBlock Text="Вы получите:"
                         TextWrapping="Wrap"
