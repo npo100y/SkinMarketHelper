@@ -7,7 +7,7 @@ using SkinMarketHelper.DAL.Interfaces;
 
 namespace SkinMarketHelper.DAL
 {
-    public class SkinMarketRepository : ISkinMarketRepository
+    public class SkinMarketRepository : ISkinMarketRepository, IDisposable
     {
         private readonly SkinMarketDbContext _context;
 
@@ -26,18 +26,16 @@ namespace SkinMarketHelper.DAL
         public IQueryable<MarketListings> GetActiveMarketListings()
         {
             return _context.MarketListings
-                .Include(ml => ml.UserInventoryItems.Items.Games)
-                .Include(ml => ml.Users1)
                 .Where(ml => ml.Status == "Active");
         }
 
-        public MarketListings GetMarketListingById(int listingId)
+        public MarketListings GetMarketListingById(int id)
         {
             return _context.MarketListings
-                .Include(ml => ml.UserInventoryItems.Items.Games)
-                .Include(ml => ml.Users1)
+                .Include(ml => ml.UserInventoryItems)
                 .Include(ml => ml.Users)
-                .SingleOrDefault(ml => ml.MarketListingID == listingId);
+                .Include(ml => ml.Users1)
+                .SingleOrDefault(ml => ml.MarketListingID == id);
         }
 
         public Users GetUserById(int userId)
@@ -53,7 +51,7 @@ namespace SkinMarketHelper.DAL
         public List<UserInventoryItems> GetUserInventory(int userId)
         {
             return _context.UserInventoryItems
-                .Include(ii => ii.Items.Games)
+                .Include(ii => ii.Items)
                 .Where(ii => ii.UserID == userId)
                 .ToList();
         }
@@ -61,8 +59,7 @@ namespace SkinMarketHelper.DAL
         public List<ShoppingCartItems> GetUserCart(int userId)
         {
             return _context.ShoppingCartItems
-                .Include(ci => ci.MarketListings.UserInventoryItems.Items.Games)
-                .Include(ci => ci.MarketListings.Users1)
+                .Include(ci => ci.MarketListings)
                 .Where(ci => ci.UserID == userId)
                 .ToList();
         }
@@ -70,7 +67,9 @@ namespace SkinMarketHelper.DAL
         public ShoppingCartItems GetCartItem(int userId, int listingId)
         {
             return _context.ShoppingCartItems
-                .FirstOrDefault(ci => ci.UserID == userId && ci.MarketListingID == listingId);
+                .SingleOrDefault(ci =>
+                    ci.UserID == userId &&
+                    ci.MarketListingID == listingId);
         }
 
         public void AddCartItem(ShoppingCartItems item)
@@ -91,6 +90,11 @@ namespace SkinMarketHelper.DAL
         public void SaveChanges()
         {
             _context.SaveChanges();
+        }
+
+        public void Dispose()
+        {
+            _context.Dispose();
         }
     }
 }
