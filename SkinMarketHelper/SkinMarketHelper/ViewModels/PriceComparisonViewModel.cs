@@ -245,23 +245,5 @@ namespace SkinMarketHelper.ViewModels
                 StatusMessage = "Ошибка загрузки внешних цен: " + ex.Message;
             }
         }
-
-        private void OpenBestOffer()
-        {
-            if (SelectedEntry == null || string.IsNullOrWhiteSpace(SelectedEntry.BestMarketplaceUrl))
-                return;
-
-            try
-            {
-                Process.Start(new ProcessStartInfo(SelectedEntry.BestMarketplaceUrl)
-                {
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = "Не удалось открыть ссылку: " + ex.Message;
-            }
-        }
     }
 }

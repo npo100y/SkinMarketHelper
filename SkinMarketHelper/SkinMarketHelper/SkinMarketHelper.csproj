@@ -87,6 +87,7 @@
     <Compile Include="DAL\Entities\sysdiagrams.cs" />
     <Compile Include="DAL\Entities\UserInventoryItems.cs" />
     <Compile Include="DAL\Entities\Users.cs" />
+    <Compile Include="Models\AdminSummaryReportData.cs" />
     <Compile Include="Models\BalanceHistory.cs" />
     <Compile Include="Models\Game.cs" />
     <Compile Include="Models\Item.cs" />

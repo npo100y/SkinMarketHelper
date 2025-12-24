@@ -29,7 +29,6 @@ namespace SkinMarketHelper.Services
                 LastInventorySync = entity.LastInventorySync,
                 Role = entity.Role,
                 Balance = entity.Balance ?? 0m
-                // ActiveListingsCount будет проставляться отдельно в AdminPanelViewModel
             };
         }
 

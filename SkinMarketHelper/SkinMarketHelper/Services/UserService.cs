@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using SkinMarketHelper.DAL;
+﻿using SkinMarketHelper.DAL;
 using SkinMarketHelper.Models;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
 
 namespace SkinMarketHelper.Services
 {
@@ -46,7 +47,6 @@ namespace SkinMarketHelper.Services
             {
                 using (var context = new SkinMarketDbContext())
                 {
-                    // Ищем либо по SteamID64, либо по Username
                     var userEntity = context.Users
                         .FirstOrDefault(u => u.SteamID64 == login || u.Username == login);
 
@@ -58,6 +58,13 @@ namespace SkinMarketHelper.Services
 
                     return userEntity.ToModel();
                 }
+            }
+            catch (SqlException ex)
+            {
+                errorMessage = "Не удалось подключиться к базе данных. " +
+                               "Проверьте строку подключения и доступность сервера.\n\n" +
+                               ex.Message;
+                return null;
             }
             catch (Exception ex)
             {

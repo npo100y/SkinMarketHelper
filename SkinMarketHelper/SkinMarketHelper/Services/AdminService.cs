@@ -119,7 +119,6 @@ namespace SkinMarketHelper.Services
                     listing.Status = "Cancelled";
                     listing.UpdatedAt = DateTime.Now;
 
-                    // Удаляем все записи из корзин, связанные с этим лотом
                     var cartItems = context.ShoppingCartItems
                         .Where(ci => ci.MarketListingID == listingId)
                         .ToList();

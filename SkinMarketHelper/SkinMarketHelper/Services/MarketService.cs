@@ -1,9 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Data.Entity;
-using SkinMarketHelper.DAL;
+﻿using SkinMarketHelper.DAL;
+using SkinMarketHelper.DAL.Entities;
 using SkinMarketHelper.Models;
+using System;
+using System.Collections.Generic;
+using System.Data.Entity;
+using System.Data.Entity.Core;
+using System.Data.Entity.Infrastructure;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
 
 namespace SkinMarketHelper.Services
 {
@@ -333,9 +338,7 @@ namespace SkinMarketHelper.Services
                             Rarity = itemEntity.Rarity,
                             IconUrl = itemEntity.IconUrl,
                             SteamMarketHashName = itemEntity.SteamMarketHashName,
-                            Game = gameEntity == null
-                                ? null
-                                : new Game
+                            Game = gameEntity == null ? null : new Game
                                 {
                                     GameId = gameEntity.GameID,
                                     AppId = gameEntity.AppID,
@@ -488,44 +491,78 @@ namespace SkinMarketHelper.Services
 
                     if (inventoryItem == null)
                     {
-                        errorMessage = "Инвентарь не найден.";
+                        errorMessage = "Предмет инвентаря не найден у данного пользователя.";
                         return false;
                     }
 
-                    var existingListing = context.MarketListings
-                        .SingleOrDefault(ml =>
-                            ml.InventoryItemID == inventoryItemId &&
-                            ml.Status == "Active");
+                    var listingEntity = context.MarketListings
+                        .SingleOrDefault(ml => ml.InventoryItemID == inventoryItemId);
 
-                    if (existingListing != null)
+                    if (listingEntity != null)
                     {
-                        errorMessage = "Для этого предмета уже существует активный лот.";
-                        return false;
+                        if (listingEntity.Status == "Active")
+                        {
+                            errorMessage = "Для этого предмета уже существует активный лот.";
+                            return false;
+                        }
+
+                        listingEntity.SellerUserID = sellerUserId;
+                        listingEntity.Price = price;
+                        listingEntity.Status = "Active";
+                        listingEntity.ListedAt = DateTime.Now;
+                        listingEntity.UpdatedAt = DateTime.Now;
+                        listingEntity.BuyerUserID = null;
+                        listingEntity.SoldAt = null;
+                    }
+                    else
+                    {
+                        listingEntity = new MarketListings
+                        {
+                            InventoryItemID = inventoryItemId,
+                            SellerUserID = sellerUserId,
+                            Price = price,
+                            ListedAt = DateTime.Now,
+                            Status = "Active",
+                            UpdatedAt = DateTime.Now
+                        };
+
+                        repo.AddMarketListing(listingEntity);
                     }
 
-                    var listingEntity = new SkinMarketHelper.DAL.Entities.MarketListings
-                    {
-                        InventoryItemID = inventoryItemId,
-                        SellerUserID = sellerUserId,
-                        Price = price,
-                        ListedAt = DateTime.Now,
-                        Status = "Active",
-                        UpdatedAt = DateTime.Now
-                    };
-
-                    repo.AddMarketListing(listingEntity);
                     repo.SaveChanges();
-
                     return true;
                 }
             }
+            catch (DbUpdateException ex)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine(ex.Message);
+                var inner = ex.InnerException;
+                while (inner != null)
+                {
+                    sb.AppendLine(inner.Message);
+                    inner = inner.InnerException;
+                }
+
+                errorMessage = "Ошибка при создании лота (ошибка обновления БД): " + sb;
+                return false;
+            }
+            catch (SqlException ex)
+            {
+                errorMessage = "Ошибка при подключении/работе с базой данных: " + ex.Message;
+                return false;
+            }
+            catch (EntityException ex)
+            {
+                errorMessage = "Ошибка уровня Entity Framework при обращении к базе данных: " + ex.Message;
+                return false;
+            }
             catch (Exception ex)
             {
-                errorMessage = "Ошибка при создании лота: " + ex.Message;
+                errorMessage = "Неизвестная ошибка при создании лота: " + ex.Message;
                 return false;
             }
         }
-
 
     }
 }
